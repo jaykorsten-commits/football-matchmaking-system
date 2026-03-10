@@ -27,13 +27,23 @@ def _get_db_url() -> str:
     if "localhost" not in url and "sslmode" not in url and "@" in url:
         sep = "&" if "?" in url else "?"
         url = url + sep + "sslmode=require"
-    import sys
-    print(f"[DB] url_len={len(url)} has_rds={'rds.' in url} has_localhost={'localhost' in url}", file=sys.stderr, flush=True)
     return url
 
 
+def _create_engine_safe(url: str):
+    """Create engine; clear libpq env vars so they don't override the URL."""
+    libpq_vars = ("PGHOST", "PGHOSTADDR", "PGPORT", "PGDATABASE", "PGUSER", "PGPASSWORD", "PGSERVICE")
+    saved = {k: os.environ.pop(k, None) for k in libpq_vars}
+    try:
+        return create_engine(url)
+    finally:
+        for k, v in saved.items():
+            if v is not None:
+                os.environ[k] = v
+
+
 SQLALCHEMY_DATABASE_URL = _get_db_url()
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+engine = _create_engine_safe(SQLALCHEMY_DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False,autoflush=False,bind=engine)
 
