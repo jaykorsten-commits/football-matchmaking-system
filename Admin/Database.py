@@ -20,14 +20,22 @@ def _get_db_url() -> str:
     if "localhost" not in url and "sslmode" not in url and "@" in url:
         sep = "&" if "?" in url else "?"
         url = url + sep + "sslmode=require"
-    import sys
-    pre = url[:60] + "..." if len(url) > 60 else url
-    print(f"[DB] url_len={len(url)} has_rds={'rds.' in url} first60={repr(pre)}", file=sys.stderr, flush=True)
     return url
 
 
-# Raw URL straight into create_engine; no custom creator, no host parsing
-engine = create_engine(_get_db_url(), pool_pre_ping=True)
+def _create_engine():
+    """Create engine; clear libpq env vars so they can't override DATABASE_URL."""
+    libpq = ("PGHOST", "PGHOSTADDR", "PGPORT", "PGDATABASE", "PGUSER", "PGPASSWORD", "PGSERVICE")
+    saved = {k: os.environ.pop(k, None) for k in libpq}
+    try:
+        return create_engine(_get_db_url(), pool_pre_ping=True)
+    finally:
+        for k, v in saved.items():
+            if v is not None:
+                os.environ[k] = v
+
+
+engine = _create_engine()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
