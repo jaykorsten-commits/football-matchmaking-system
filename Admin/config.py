@@ -3,17 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    # On Heroku (PORT set), skip .env to avoid any override. Local: load .env.
-    _on_heroku = bool(__import__("os").environ.get("PORT"))
-    model_config = SettingsConfigDict(
-        env_file=(),
-        env_file_encoding="utf-8",
-        extra="ignore",
-    ) if _on_heroku else SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
     database_url: str | None = Field(default=None, validation_alias="DATABASE_URL")
     database_hostname: str = "localhost"
     database_name: str = ""

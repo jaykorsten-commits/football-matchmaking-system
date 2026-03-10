@@ -16,12 +16,6 @@ def _get_db_url() -> str:
     url = (url or "").strip()
     if not url:
         raise RuntimeError("DATABASE_URL or DB settings must be set")
-    # On Heroku we must use remote URL; localhost => DATABASE_URL not in this process
-    if os.environ.get("PORT") and "localhost" in url:
-        raise RuntimeError(
-            "DATABASE_URL not found in web process env (got localhost). "
-            "Heroku config has it (release passes). Check addon attachment."
-        )
     if url.startswith("postgres://"):
         url = "postgresql://" + url[10:]
     # Ensure SSL for Heroku Postgres (remote URLs)
