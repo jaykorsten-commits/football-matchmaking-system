@@ -1,9 +1,19 @@
+import os
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _env_files() -> tuple[str, ...]:
+    """On Heroku (PORT set), skip .env to avoid any override; use only env vars."""
+    if os.environ.get("PORT"):
+        return ()  # Heroku: config vars only
+    return (".env",)
+
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=_env_files(), env_file_encoding="utf-8", extra="ignore"
+    )
     database_url: str | None = Field(default=None, validation_alias="DATABASE_URL")
     database_hostname: str = "localhost"
     database_name: str = ""

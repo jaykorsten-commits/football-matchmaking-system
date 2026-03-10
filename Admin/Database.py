@@ -12,6 +12,11 @@ def _get_db_url() -> str:
     """Prefer os.environ DATABASE_URL (Heroku), else settings (local .env)."""
     url = os.environ.get("DATABASE_URL")
     if not (url and url.strip()):
+        # On Heroku (PORT set), never fall back to localhost
+        if os.environ.get("PORT"):
+            raise RuntimeError(
+                "DATABASE_URL not set on Heroku. Check addon attachment and config vars."
+            )
         url = settings.get_database_url()
     url = (url or "").strip()
     if not url:
