@@ -30,12 +30,12 @@ def _get_db_url() -> str:
     return url
 
 
-def _create_engine_safe(url: str):
-    """Create engine; clear libpq env vars so they don't override the URL."""
+def _creator():
+    """Creator that connects with explicit URL; clears libpq env to avoid override."""
     libpq_vars = ("PGHOST", "PGHOSTADDR", "PGPORT", "PGDATABASE", "PGUSER", "PGPASSWORD", "PGSERVICE")
     saved = {k: os.environ.pop(k, None) for k in libpq_vars}
     try:
-        return create_engine(url)
+        return psycopg2.connect(SQLALCHEMY_DATABASE_URL)
     finally:
         for k, v in saved.items():
             if v is not None:
@@ -43,7 +43,8 @@ def _create_engine_safe(url: str):
 
 
 SQLALCHEMY_DATABASE_URL = _get_db_url()
-engine = _create_engine_safe(SQLALCHEMY_DATABASE_URL)
+# Use creator to bypass SQLAlchemy's URL handling; psycopg2.connect(url) with cleared PG* env
+engine = create_engine("postgresql://", creator=_creator)
 
 SessionLocal = sessionmaker(autocommit=False,autoflush=False,bind=engine)
 
