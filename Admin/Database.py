@@ -6,13 +6,15 @@ from .config import settings
 
 
 def _get_db_url() -> str:
-    """Use DATABASE_URL from env; never fall back to localhost on Heroku."""
-    url = os.environ.get("DATABASE_URL")
-    if not (url and url.strip()):
+    """Use DATABASE_URL from env; never fall back to localhost on Heroku (PORT set)."""
+    url = (os.environ.get("DATABASE_URL") or "").strip()
+    if not url:
         if os.environ.get("PORT"):
-            raise RuntimeError("DATABASE_URL missing on Heroku")
+            raise RuntimeError(
+                "DATABASE_URL is empty on Heroku. Web dyno may not receive addon vars. PORT="
+                + repr(os.environ.get("PORT"))
+            )
         url = settings.get_database_url()
-    url = (url or "").strip()
     if not url:
         raise RuntimeError("DATABASE_URL or DB settings must be set")
     if url.startswith("postgres://"):
