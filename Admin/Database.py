@@ -23,19 +23,12 @@ def _get_db_url() -> str:
     return url
 
 
-def _create_engine():
-    """Create engine; clear libpq env vars so they can't override DATABASE_URL."""
-    libpq = ("PGHOST", "PGHOSTADDR", "PGPORT", "PGDATABASE", "PGUSER", "PGPASSWORD", "PGSERVICE")
-    saved = {k: os.environ.pop(k, None) for k in libpq}
-    try:
-        return create_engine(_get_db_url(), pool_pre_ping=True)
-    finally:
-        for k, v in saved.items():
-            if v is not None:
-                os.environ[k] = v
+# Clear libpq env vars so they can't override DATABASE_URL when pool connects (lazy)
+libpq = ("PGHOST", "PGHOSTADDR", "PGPORT", "PGDATABASE", "PGUSER", "PGPASSWORD", "PGSERVICE")
+for k in libpq:
+    os.environ.pop(k, None)
 
-
-engine = _create_engine()
+engine = create_engine(_get_db_url(), pool_pre_ping=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
