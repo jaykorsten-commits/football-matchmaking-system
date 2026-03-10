@@ -3,9 +3,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    # env_file=".env" loads from file if present; env vars override. Use env_file only when file exists.
+    # On Heroku (PORT set), skip .env to avoid any override. Local: load .env.
+    _on_heroku = bool(__import__("os").environ.get("PORT"))
     model_config = SettingsConfigDict(
-        env_file=(".env",) if __import__("pathlib").Path(".env").exists() else (),
+        env_file=(),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    ) if _on_heroku else SettingsConfigDict(
+        env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )
