@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from urllib.parse import urlparse
 import os
 from .config import settings
 
@@ -27,16 +27,12 @@ def _get_db_url() -> str:
 
 
 _url = _get_db_url()
-_parsed = urlparse(_url)
-# Force TCP: explicit host/port in connect_args so psycopg2 never falls back to socket
+_parsed = make_url(_url)  # SQLAlchemy parser handles postgresql:// correctly
 _connect_args = {}
-if _parsed.hostname and "localhost" not in _parsed.hostname:
-    _connect_args["host"] = _parsed.hostname
+if _parsed.host and "localhost" not in (_parsed.host or ""):
+    _connect_args["host"] = _parsed.host
     _connect_args["port"] = _parsed.port or 5432
     _connect_args["sslmode"] = "require"
-    print(f"[BOOT] connect_args host={_parsed.hostname} port={_parsed.port or 5432}", flush=True)
-else:
-    print(f"[BOOT] no connect_args (hostname={_parsed.hostname!r})", flush=True)
 engine = create_engine(_url, pool_pre_ping=True, connect_args=_connect_args)
 
 print("[BOOT] simplified Database.py loaded", flush=True)
