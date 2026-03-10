@@ -3,7 +3,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    # env_file=".env" loads from file if present; env vars override. Use env_file only when file exists.
+    model_config = SettingsConfigDict(
+        env_file=(".env",) if __import__("pathlib").Path(".env").exists() else (),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
     database_url: str | None = Field(default=None, validation_alias="DATABASE_URL")
     database_hostname: str = "localhost"
     database_name: str = ""
