@@ -20,6 +20,9 @@ def _get_db_url() -> str:
         raise RuntimeError("DATABASE_URL or DB settings must be set")
     if url.startswith("postgres://"):
         url = "postgresql://" + url[10:]
+    # Heroku gives postgres:///user:pass@host/db (3 slashes) - fix so netloc is parsed
+    if url.startswith("postgresql:///") and "@" in url:
+        url = "postgresql://" + url[13:]  # remove one slash: /// -> //
     if "localhost" not in url and "sslmode" not in url and "@" in url:
         sep = "&" if "?" in url else "?"
         url = url + sep + "sslmode=require"
@@ -29,7 +32,6 @@ def _get_db_url() -> str:
 _url = _get_db_url()
 _parsed = make_url(_url)  # SQLAlchemy parser handles postgresql:// correctly
 _connect_args = {}
-print(f"[BOOT] make_url host={_parsed.host!r} port={_parsed.port}", flush=True)
 if _parsed.host and "localhost" not in (_parsed.host or ""):
     _connect_args["host"] = _parsed.host
     _connect_args["port"] = _parsed.port or 5432
