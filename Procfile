@@ -1,1 +1,2 @@
-web: python -c "import os; import uvicorn; uvicorn.run('Admin.main:app', host='0.0.0.0', port=int(os.environ['PORT']), factory=False)"
+release: python -c "import os; url=os.environ.get('DATABASE_URL') or ''; exit(0 if url and 'rds.' in url else 1)"
+web: uvicorn Admin.main:app --host=0.0.0.0 --port=$PORT
