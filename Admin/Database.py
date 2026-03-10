@@ -25,12 +25,10 @@ def _get_db_url() -> str:
     return url
 
 
-# Clear libpq env vars so they can't override DATABASE_URL when pool connects (lazy)
-libpq = ("PGHOST", "PGHOSTADDR", "PGPORT", "PGDATABASE", "PGUSER", "PGPASSWORD", "PGSERVICE")
-for k in libpq:
-    os.environ.pop(k, None)
-
 engine = create_engine(_get_db_url(), pool_pre_ping=True)
+
+print("[BOOT] simplified Database.py loaded", flush=True)
+print(engine.url.render_as_string(hide_password=True), flush=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

@@ -7,8 +7,18 @@ from . import models
 from . import schemas
 from .Database import engine, SessionLocal, get_db
 
-models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
+
+
+@app.on_event("startup")
+def startup():
+    pass  # create_all disabled for diagnosis until /health works
+    # models.Base.metadata.create_all(bind=engine)
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 @app.exception_handler(RequestValidationError)
