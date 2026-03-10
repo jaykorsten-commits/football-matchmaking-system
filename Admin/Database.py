@@ -21,7 +21,7 @@ def _get_db_url() -> str:
         url = "postgresql://" + url[10:]
     # Heroku gives postgres:///user:pass@host/db (3 slashes) - fix so netloc is parsed
     if url.startswith("postgresql:///") and "@" in url:
-        url = "postgresql://" + url[13:]  # remove one slash: /// -> //
+        url = "postgresql://" + url[14:]  # len("postgresql:///")==14, skip the extra slash
     if "localhost" not in url and "sslmode" not in url and "@" in url:
         sep = "&" if "?" in url else "?"
         url = url + sep + "sslmode=require"
