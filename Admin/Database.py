@@ -34,6 +34,9 @@ if _parsed.hostname and "localhost" not in _parsed.hostname:
     _connect_args["host"] = _parsed.hostname
     _connect_args["port"] = _parsed.port or 5432
     _connect_args["sslmode"] = "require"
+    print(f"[BOOT] connect_args host={_parsed.hostname} port={_parsed.port or 5432}", flush=True)
+else:
+    print(f"[BOOT] no connect_args (hostname={_parsed.hostname!r})", flush=True)
 engine = create_engine(_url, pool_pre_ping=True, connect_args=_connect_args)
 
 print("[BOOT] simplified Database.py loaded", flush=True)
