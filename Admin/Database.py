@@ -27,6 +27,8 @@ def _get_db_url() -> str:
     if "localhost" not in url and "sslmode" not in url and "@" in url:
         sep = "&" if "?" in url else "?"
         url = url + sep + "sslmode=require"
+    import sys
+    print(f"[DB] url_len={len(url)} has_rds={'rds.' in url} has_localhost={'localhost' in url}", file=sys.stderr, flush=True)
     return url
 
 
