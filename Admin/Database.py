@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from urllib.parse import urlparse
 import os
 from .config import settings
 
@@ -25,7 +26,15 @@ def _get_db_url() -> str:
     return url
 
 
-engine = create_engine(_get_db_url(), pool_pre_ping=True)
+_url = _get_db_url()
+_parsed = urlparse(_url)
+# Force TCP: explicit host/port in connect_args so psycopg2 never falls back to socket
+_connect_args = {}
+if _parsed.hostname and "localhost" not in _parsed.hostname:
+    _connect_args["host"] = _parsed.hostname
+    _connect_args["port"] = _parsed.port or 5432
+    _connect_args["sslmode"] = "require"
+engine = create_engine(_url, pool_pre_ping=True, connect_args=_connect_args)
 
 print("[BOOT] simplified Database.py loaded", flush=True)
 print(engine.url.render_as_string(hide_password=True), flush=True)
