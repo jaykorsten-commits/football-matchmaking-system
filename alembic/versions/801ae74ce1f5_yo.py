@@ -19,11 +19,65 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Upgrade schema. Safe for existing DB (old project had no parties table)."""
+    """Upgrade schema. Safe for fresh or existing DB."""
     op.drop_table('party_member_positions', if_exists=True)
     op.drop_table('party_members', if_exists=True)
     op.drop_table('parties', if_exists=True)
-    op.execute("ALTER TABLE queue_players DROP CONSTRAINT IF EXISTS queue_players_party_id_fkey")
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    tables = inspector.get_table_names()
+    if 'region_counters' not in tables:
+        op.create_table('region_counters',
+            sa.Column('region', sa.String(), primary_key=True),
+            sa.Column('next_number', sa.Integer(), nullable=False),
+        )
+    if 'queues' not in tables:
+        op.create_table('queues',
+            sa.Column('queue_id', sa.Integer(), primary_key=True, autoincrement=True),
+            sa.Column('queue_code', sa.String(), nullable=False, unique=True),
+            sa.Column('status', sa.String(), nullable=False),
+            sa.Column('region', sa.String(), nullable=False),
+            sa.Column('max_players', sa.Integer(), nullable=False),
+            sa.Column('players_in_queue', sa.Integer(), nullable=False),
+            sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
+        )
+    if 'queue_slot' not in tables:
+        op.create_table('queue_slot',
+            sa.Column('slot_id', sa.Integer(), primary_key=True, autoincrement=True),
+            sa.Column('queue_id', sa.Integer(), sa.ForeignKey('queues.queue_id'), nullable=False),
+            sa.Column('team', sa.String(), nullable=False),
+            sa.Column('position', sa.String(), nullable=False),
+            sa.Column('slot_number', sa.Integer(), nullable=False),
+            sa.Column('occupant_user_id', sa.BigInteger(), nullable=True),
+            sa.Column('status', sa.String(), nullable=False),
+        )
+    if 'queue_players' not in tables:
+        op.create_table('queue_players',
+            sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
+            sa.Column('user_id', sa.BigInteger(), nullable=False),
+            sa.Column('queue_id', sa.Integer(), sa.ForeignKey('queues.queue_id'), nullable=False),
+            sa.Column('party_id', sa.String(), nullable=True),
+            sa.Column('assigned_slot_id', sa.Integer(), sa.ForeignKey('queue_slot.slot_id'), nullable=False),
+            sa.Column('joined_at', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
+        )
+    if 'matches' not in tables:
+        op.create_table('matches',
+            sa.Column('match_id', sa.Integer(), primary_key=True, autoincrement=True),
+            sa.Column('queue_id', sa.Integer(), sa.ForeignKey('queues.queue_id'), nullable=False),
+            sa.Column('match_code', sa.String(), nullable=False, unique=True),
+            sa.Column('status', sa.String(), nullable=False),
+            sa.Column('region', sa.String(), nullable=False),
+            sa.Column('place_id', sa.BigInteger(), nullable=False),
+            sa.Column('reserved_server_code', sa.String(), nullable=False),
+            sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
+        )
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'queue_players') THEN
+                ALTER TABLE queue_players DROP CONSTRAINT IF EXISTS queue_players_party_id_fkey;
+            END IF;
+        END $$;
+    """)
 
 
 def downgrade() -> None:
