@@ -10,7 +10,13 @@ from .config import settings
 
 def _get_db_url() -> str:
     """Prefer os.environ DATABASE_URL (Heroku), else settings (local .env)."""
-    url = os.environ.get("DATABASE_URL") or settings.get_database_url()
+    url = os.environ.get("DATABASE_URL")
+    if not url:
+        url = settings.get_database_url()
+    # Debug: log source (remove after fix)
+    import sys
+    print("[DB] DATABASE_URL from os.environ:", "yes" if os.environ.get("DATABASE_URL") else "no", flush=True)
+    sys.stdout.flush()
     url = (url or "").strip()
     if not url:
         raise RuntimeError("DATABASE_URL or DB settings must be set")
