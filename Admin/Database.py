@@ -29,11 +29,10 @@ def _get_db_url() -> str:
 
 
 _url = _get_db_url()
-# _url is normalized (postgresql:/// -> postgresql://) so host/port parse correctly
 engine = create_engine(_url, pool_pre_ping=True)
 
-print("[BOOT] simplified Database.py loaded", flush=True)
-print(engine.url.render_as_string(hide_password=True), flush=True)
+print(f"[BOOT] raw _url prefix: {repr(_url[:120])}", flush=True)
+print(f"[BOOT] engine url: {engine.url.render_as_string(hide_password=True)}", flush=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -41,6 +40,9 @@ Base = declarative_base()
 
 
 def get_db():
+    print(f"[REQ] engine url: {engine.url.render_as_string(hide_password=True)}", flush=True)
+    print(f"[REQ] engine id: {id(engine)}", flush=True)
+    print(f"[REQ] SessionLocal id: {id(SessionLocal)}", flush=True)
     db = SessionLocal()
     try:
         yield db
