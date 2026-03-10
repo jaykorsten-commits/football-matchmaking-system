@@ -40,3 +40,6 @@ wheels/
 
 # Roblox (copy/paste into Studio, not versioned)
 Roblox/
+
+# Test / scratch files
+testmain*
