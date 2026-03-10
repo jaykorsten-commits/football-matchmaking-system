@@ -1,5 +1,4 @@
 from sqlalchemy import create_engine
-from sqlalchemy.engine import make_url
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
@@ -30,13 +29,8 @@ def _get_db_url() -> str:
 
 
 _url = _get_db_url()
-_parsed = make_url(_url)  # SQLAlchemy parser handles postgresql:// correctly
-_connect_args = {}
-if _parsed.host and "localhost" not in (_parsed.host or ""):
-    _connect_args["host"] = _parsed.host
-    _connect_args["port"] = _parsed.port or 5432
-    _connect_args["sslmode"] = "require"
-engine = create_engine(_url, pool_pre_ping=True, connect_args=_connect_args)
+# _url is normalized (postgresql:/// -> postgresql://) so host/port parse correctly
+engine = create_engine(_url, pool_pre_ping=True)
 
 print("[BOOT] simplified Database.py loaded", flush=True)
 print(engine.url.render_as_string(hide_password=True), flush=True)
