@@ -1,20 +1,20 @@
-from pydantic_settings import BaseSettings
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    database_url: str | None = None  # Heroku sets DATABASE_URL
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    database_url: str | None = Field(default=None, validation_alias="DATABASE_URL")
     database_hostname: str = "localhost"
     database_name: str = ""
     database_port: str = "5432"
     database_password: str = ""
     database_username: str = "postgres"
     match_place_id: int = 0  # Roblox place ID for match (set in .env as MATCH_PLACE_ID)
+    api_key: str | None = None  # X-API-Key header; if set, all queue endpoints require it
     # roblox_open_cloud_api_key: str
     # roblox_universe_id: str
     # access_token_expire_time: str
-
-    class Config:
-        env_file = ".env"
 
     def get_database_url(self) -> str:
         """Return DB URL. Use DATABASE_URL if set (Heroku), else build from individual vars."""
