@@ -29,6 +29,7 @@ def _get_db_url() -> str:
 _url = _get_db_url()
 _parsed = make_url(_url)  # SQLAlchemy parser handles postgresql:// correctly
 _connect_args = {}
+print(f"[BOOT] make_url host={_parsed.host!r} port={_parsed.port}", flush=True)
 if _parsed.host and "localhost" not in (_parsed.host or ""):
     _connect_args["host"] = _parsed.host
     _connect_args["port"] = _parsed.port or 5432
