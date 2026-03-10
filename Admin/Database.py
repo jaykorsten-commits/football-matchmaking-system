@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from urllib.parse import urlparse, parse_qs
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -31,11 +32,24 @@ def _get_db_url() -> str:
 
 
 def _creator():
-    """Creator that connects with explicit URL; clears libpq env to avoid override."""
+    """Creator using explicit host/port to avoid libpq env override to localhost."""
+    parsed = urlparse(SQLALCHEMY_DATABASE_URL)
+    qs = parse_qs(parsed.query)
+    kwargs = {
+        "host": parsed.hostname or "localhost",
+        "port": parsed.port or 5432,
+        "dbname": (parsed.path or "/").lstrip("/") or "postgres",
+        "user": parsed.username,
+        "password": parsed.password,
+    }
+    if "sslmode" in qs:
+        kwargs["sslmode"] = qs["sslmode"][0]
+    elif "rds." in (parsed.hostname or ""):
+        kwargs["sslmode"] = "require"
     libpq_vars = ("PGHOST", "PGHOSTADDR", "PGPORT", "PGDATABASE", "PGUSER", "PGPASSWORD", "PGSERVICE")
     saved = {k: os.environ.pop(k, None) for k in libpq_vars}
     try:
-        return psycopg2.connect(SQLALCHEMY_DATABASE_URL)
+        return psycopg2.connect(**kwargs)
     finally:
         for k, v in saved.items():
             if v is not None:
@@ -43,7 +57,6 @@ def _creator():
 
 
 SQLALCHEMY_DATABASE_URL = _get_db_url()
-# Use creator to bypass SQLAlchemy's URL handling; psycopg2.connect(url) with cleared PG* env
 engine = create_engine("postgresql://", creator=_creator)
 
 SessionLocal = sessionmaker(autocommit=False,autoflush=False,bind=engine)
