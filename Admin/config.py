@@ -1,5 +1,5 @@
 import os
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # ----------------------------------------------------------------------
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     database_password: str = ""
     database_username: str = "postgres"
     match_place_id: int = 0  # Roblox place ID for match (set in .env as MATCH_PLACE_ID)
-    api_key: str | None = Field(default=None, validation_alias=["QUEUE_API_KEY", "API_KEY"])  # X-API-Key header
+    api_key: str | None = Field(default=None, validation_alias=AliasChoices("QUEUE_API_KEY", "API_KEY"))
 
     def get_database_url(self) -> str:
         # Return DB URL. Use DATABASE_URL if set (Heroku), else build from individual vars.
