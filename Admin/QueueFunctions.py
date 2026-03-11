@@ -207,8 +207,22 @@ def join_solo_queue(payload, db):
     if existing_player:
         raise HTTPException(status_code=400, detail="User is already in a queue.")
 
-    Available_Queues = db.query(models.Queues).filter(models.Queues.status == schemas.QueueStatus.OPEN.value,
-                                                      models.Queues.region == payload.region.value).all()
+    queue_type_val = payload.queue_type.value
+    ranked_tier_val = payload.ranked_tier.value if payload.ranked_tier else None
+    team_format_val = payload.team_format
+    max_players = 10 if team_format_val == "5v5" else 14
+
+    pool_f_solo = [
+        models.Queues.status == schemas.QueueStatus.OPEN.value,
+        models.Queues.region == payload.region.value,
+        models.Queues.queue_type == queue_type_val,
+        models.Queues.team_format == team_format_val,
+    ]
+    if ranked_tier_val:
+        pool_f_solo.append(models.Queues.ranked_tier == ranked_tier_val)
+    else:
+        pool_f_solo.append(models.Queues.ranked_tier.is_(None))
+    Available_Queues = db.query(models.Queues).filter(*pool_f_solo).all()
     chosen_queue = None
     chosen_slot = None
 
@@ -220,13 +234,24 @@ def join_solo_queue(payload, db):
             break
 
     if chosen_queue is None:
-        queue_code = generate_queue_code(db,region)
-
-        chosen_queue = models.Queues(queue_code=queue_code,region=region.value,status=schemas.QueueStatus.OPEN.value,max_players=8,players_in_queue=0)
+        queue_code = generate_queue_code(db, region)
+        chosen_queue = models.Queues(
+            queue_code=queue_code,
+            region=region.value,
+            status=schemas.QueueStatus.OPEN.value,
+            max_players=max_players,
+            players_in_queue=0,
+            queue_type=queue_type_val,
+            ranked_tier=ranked_tier_val,
+            team_format=team_format_val,
+        )
         db.add(chosen_queue)
         db.flush()
 
-        create_slots_for_queue_5v5(db,chosen_queue.queue_id)
+        if team_format_val == "7v7":
+            create_slots_for_queue_7v7(db, chosen_queue.queue_id)
+        else:
+            create_slots_for_queue_5v5(db, chosen_queue.queue_id)
         db.flush()
 
 
@@ -247,11 +272,11 @@ def join_solo_queue(payload, db):
     new_queue_player = models.queue_players(
             user_id=user_id,
             queue_id=chosen_queue.queue_id,
-            assigned_slot_id=chosen_slot.slot_id
+            assigned_slot_id=chosen_slot.slot_id,
+            player_level=payload.player_level,
         )
 
     db.add(new_queue_player)
-
 
     chosen_queue.players_in_queue = chosen_queue.players_in_queue + 1
 
@@ -259,17 +284,11 @@ def join_solo_queue(payload, db):
         chosen_queue.status = schemas.QueueStatus.COUNTDOWN.value
         chosen_queue.countdown_ends_at = datetime.now(timezone.utc) + timedelta(seconds=COUNTDOWN_SECONDS)
 
-    open_queues_count = db.query(models.Queues).filter(
-        models.Queues.status == schemas.QueueStatus.OPEN.value,
-        models.Queues.region == chosen_queue.region
-    ).count()
-
+    pool_f_out = _pool_filter(chosen_queue.region, chosen_queue.queue_type, chosen_queue.ranked_tier, chosen_queue.team_format)
+    open_queues_count = db.query(models.Queues).filter(*pool_f_out).count()
     total_players_queued = db.query(
         func.coalesce(func.sum(models.Queues.players_in_queue), 0)
-    ).filter(
-        models.Queues.region == chosen_queue.region,
-        models.Queues.status == schemas.QueueStatus.OPEN.value
-    ).scalar()
+    ).filter(*pool_f_out).scalar()
 
     db.commit()
     db.refresh(chosen_queue)
@@ -279,6 +298,9 @@ def join_solo_queue(payload, db):
     queue_payload = {
         "queue_id": chosen_queue.queue_code,
         "region": chosen_queue.region,
+        "queue_type": chosen_queue.queue_type,
+        "ranked_tier": chosen_queue.ranked_tier,
+        "team_format": chosen_queue.team_format,
         "status": chosen_queue.status,
         "players_in_queue": chosen_queue.players_in_queue,
         "max_players": chosen_queue.max_players,
@@ -295,6 +317,9 @@ def join_solo_queue(payload, db):
         "teams": teams,
         "region_stats": {
             "region": chosen_queue.region,
+            "queue_type": chosen_queue.queue_type,
+            "ranked_tier": chosen_queue.ranked_tier,
+            "team_format": chosen_queue.team_format,
             "open_queues": open_queues_count,
             "total_players_queued": total_players_queued
         }
@@ -758,10 +783,22 @@ def join_party_queue(payload, db):
         if existing_player:
             raise HTTPException(status_code=400, detail=f"User {member.user_id} is already in a queue.")
 
-    Available_Queues = db.query(models.Queues).filter(
+    queue_type_val = payload.queue_type.value
+    ranked_tier_val = payload.ranked_tier.value if payload.ranked_tier else None
+    team_format_val = payload.team_format
+    max_players = 10 if team_format_val == "5v5" else 14
+
+    pool_f_party = [
         models.Queues.status == schemas.QueueStatus.OPEN.value,
-        models.Queues.region == payload.region.value
-    ).all()
+        models.Queues.region == payload.region.value,
+        models.Queues.queue_type == queue_type_val,
+        models.Queues.team_format == team_format_val,
+    ]
+    if ranked_tier_val:
+        pool_f_party.append(models.Queues.ranked_tier == ranked_tier_val)
+    else:
+        pool_f_party.append(models.Queues.ranked_tier.is_(None))
+    Available_Queues = db.query(models.Queues).filter(*pool_f_party).all()
 
     chosen_queue = None
     party_assignments = None
@@ -775,18 +812,23 @@ def join_party_queue(payload, db):
 
     if chosen_queue is None:
         queue_code = generate_queue_code(db, region)
-
         chosen_queue = models.Queues(
             queue_code=queue_code,
             region=region.value,
             status=schemas.QueueStatus.OPEN.value,
-            max_players=8,
-            players_in_queue=0
+            max_players=max_players,
+            players_in_queue=0,
+            queue_type=queue_type_val,
+            ranked_tier=ranked_tier_val,
+            team_format=team_format_val,
         )
         db.add(chosen_queue)
         db.flush()
 
-        create_slots_for_queue_5v5(db, chosen_queue.queue_id)
+        if team_format_val == "7v7":
+            create_slots_for_queue_7v7(db, chosen_queue.queue_id)
+        else:
+            create_slots_for_queue_5v5(db, chosen_queue.queue_id)
         db.flush()
 
         party_assignments = find_matching_open_slots_for_party(db, chosen_queue.queue_id, members)
@@ -794,9 +836,11 @@ def join_party_queue(payload, db):
     if party_assignments is None:
         raise HTTPException(status_code=500, detail="Queue created but no slots found.")
 
+    member_by_id = {m.user_id: m for m in members}
     for assignment in party_assignments:
         member_user_id = assignment["user_id"]
         assigned_slot = assignment["slot"]
+        member = member_by_id.get(member_user_id)
 
         assigned_slot.occupant_user_id = member_user_id
         assigned_slot.status = "filled"
@@ -805,7 +849,8 @@ def join_party_queue(payload, db):
             user_id=member_user_id,
             queue_id=chosen_queue.queue_id,
             assigned_slot_id=assigned_slot.slot_id,
-            party_id=party_id
+            party_id=party_id,
+            player_level=member.player_level if member else None,
         )
         db.add(new_queue_player)
 
@@ -818,23 +863,20 @@ def join_party_queue(payload, db):
     db.commit()
     db.refresh(chosen_queue)
 
-    open_queues_count = db.query(models.Queues).filter(
-        models.Queues.status == schemas.QueueStatus.OPEN.value,
-        models.Queues.region == chosen_queue.region
-    ).count()
-
+    pool_f_out = _pool_filter(chosen_queue.region, chosen_queue.queue_type, chosen_queue.ranked_tier, chosen_queue.team_format)
+    open_queues_count = db.query(models.Queues).filter(*pool_f_out).count()
     total_players_queued = db.query(
         func.coalesce(func.sum(models.Queues.players_in_queue), 0)
-    ).filter(
-        models.Queues.region == chosen_queue.region,
-        models.Queues.status == schemas.QueueStatus.OPEN.value
-    ).scalar()
+    ).filter(*pool_f_out).scalar()
 
     teams = build_queue_teams(db, chosen_queue.queue_id)
 
     queue_payload = {
         "queue_id": chosen_queue.queue_code,
         "region": chosen_queue.region,
+        "queue_type": chosen_queue.queue_type,
+        "ranked_tier": chosen_queue.ranked_tier,
+        "team_format": chosen_queue.team_format,
         "status": chosen_queue.status,
         "players_in_queue": chosen_queue.players_in_queue,
         "max_players": chosen_queue.max_players,
@@ -861,6 +903,9 @@ def join_party_queue(payload, db):
         "teams": teams,
         "region_stats": {
             "region": chosen_queue.region,
+            "queue_type": chosen_queue.queue_type,
+            "ranked_tier": chosen_queue.ranked_tier,
+            "team_format": chosen_queue.team_format,
             "open_queues": open_queues_count,
             "total_players_queued": total_players_queued
         }
