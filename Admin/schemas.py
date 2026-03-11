@@ -43,7 +43,7 @@ class PartyMemberInput(BaseSchema):
     positions: list[Position] = Field(min_length=1, max_length=4)
 
 class PartyJoinRequest(BaseSchema):
-    party_id: str = Field(min_length=1, max_length=24)
+    party_id: str = Field(min_length=1, max_length=64)
     region: Region
     members: list[PartyMemberInput] = Field(min_length=2, max_length=4)
 
