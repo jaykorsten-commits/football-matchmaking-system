@@ -1,0 +1,4 @@
+$kind: collection
+name: Status
+description: Queue status and region information endpoints
+order: 3000

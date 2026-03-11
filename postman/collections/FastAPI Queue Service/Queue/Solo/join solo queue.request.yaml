@@ -1,0 +1,23 @@
+$kind: http-request
+name: Join Solo Queue
+method: POST
+url: '{{baseUrl}}/queue/join/solo'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: X-API-Key
+    value: '{{apiKey}}'
+    description: API key for authentication
+body:
+  type: json
+  content: |-
+    {
+      "user_id": 123456789,
+      "region": "EU",
+      "positions": ["GK", "CB"],
+      "team_format": "5v5",
+      "queue_type": "regular",
+      "ranked_tier": null,
+      "player_level": 42
+    }

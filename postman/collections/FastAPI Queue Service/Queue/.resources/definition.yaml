@@ -1,0 +1,6 @@
+$kind: collection
+name: Queue
+description: |-
+  Queue management endpoints for matchmaking.
+  All endpoints require X-API-Key header authentication.
+order: 2000

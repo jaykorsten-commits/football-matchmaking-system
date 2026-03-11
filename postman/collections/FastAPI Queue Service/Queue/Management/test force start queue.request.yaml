@@ -1,0 +1,21 @@
+$kind: http-request
+name: Test Force Start Queue
+method: POST
+url: '{{baseUrl}}/queue/:queue_code/test-force-start'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: X-API-Key
+    value: '{{apiKey}}'
+    description: API key for authentication
+pathVariables:
+  - key: queue_code
+    value: '{{queueCode}}'
+    description: The queue code to force start (e.g., eu_01)
+body:
+  type: json
+  content: |-
+    {
+      "job_id": "job_abc123xyz"
+    }

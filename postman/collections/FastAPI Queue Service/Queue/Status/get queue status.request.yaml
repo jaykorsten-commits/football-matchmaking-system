@@ -1,0 +1,13 @@
+$kind: http-request
+name: Get Queue Status
+method: GET
+url: '{{baseUrl}}/queue/status/:user_id'
+order: 1000
+headers:
+  - key: X-API-Key
+    value: '{{apiKey}}'
+    description: API key for authentication
+pathVariables:
+  - key: user_id
+    value: '{{userId}}'
+    description: The user ID to check queue status for

@@ -1,0 +1,4 @@
+$kind: collection
+name: Management
+description: Queue management operations - reserve and force start queues
+order: 4000

@@ -1,0 +1,69 @@
+# Queue API - HTTP requests for testing (VS Code REST Client or curl)
+# Set baseUrl and apiKey in environment or edit below
+@baseUrl = https://fastapi-369-dd714db3df0d.herokuapp.com
+@apiKey = your_api_key_here
+
+### Health
+GET {{baseUrl}}/health
+
+### Join Solo (regular)
+POST {{baseUrl}}/queue/join/solo
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+{
+  "user_id": 999001,
+  "region": "EU",
+  "positions": ["CB", "GK"],
+  "team_format": "5v5",
+  "queue_type": "regular"
+}
+
+### Region Status
+POST {{baseUrl}}/queue/region/status
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+{
+  "region": "EU",
+  "queue_type": "regular",
+  "team_format": "5v5"
+}
+
+### Queue List (manual queue mode)
+POST {{baseUrl}}/queue/list
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+{
+  "region": "EU",
+  "queue_type": "regular",
+  "team_format": "5v5",
+  "page": 1,
+  "page_size": 10
+}
+
+### Queue Status
+GET {{baseUrl}}/queue/status/999001
+X-API-Key: {{apiKey}}
+
+### Leave Solo
+POST {{baseUrl}}/queue/leave/solo
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+{
+  "user_id": 999001
+}
+
+### Cleanup
+POST {{baseUrl}}/queue/cleanup/run
+X-API-Key: {{apiKey}}
+
+### Teleport Info (replace eu_01 with real queue_code)
+GET {{baseUrl}}/queue/eu_01/teleport-info
+X-API-Key: {{apiKey}}
+
+### Reserve (replace eu_01 with real queue_code)
+POST {{baseUrl}}/queue/eu_01/reserve
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+{
+  "job_id": "test-job-123"
+}

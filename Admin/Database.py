@@ -4,9 +4,12 @@ from sqlalchemy.orm import sessionmaker
 import os
 from .config import settings
 
+# ----------------------------------------------------------------------
+# Database URL
+# ----------------------------------------------------------------------
 
 def _get_db_url() -> str:
-    """Use DATABASE_URL from env; never fall back to localhost on Heroku (PORT set)."""
+    # Use DATABASE_URL from env; never fall back to localhost on Heroku (PORT set).
     url = (os.environ.get("DATABASE_URL") or "").strip()
     if not url:
         if os.environ.get("PORT"):
@@ -19,7 +22,7 @@ def _get_db_url() -> str:
         raise RuntimeError("DATABASE_URL or DB settings must be set")
     if url.startswith("postgres://"):
         url = "postgresql://" + url[10:]
-    # Heroku gives postgres:///user:pass@host/db (3 slashes) - fix so netloc is parsed
+    # Heroku gives postgres:///user:pass@host/db (3 slashes); fix so netloc is parsed
     if url.startswith("postgresql:///") and "@" in url:
         url = "postgresql://" + url[14:]  # len("postgresql:///")==14, skip the extra slash
     if "localhost" not in url and "sslmode" not in url and "@" in url:
@@ -31,18 +34,14 @@ def _get_db_url() -> str:
 _url = _get_db_url()
 engine = create_engine(_url, pool_pre_ping=True)
 
-print(f"[BOOT] raw _url prefix: {repr(_url[:120])}", flush=True)
-print(f"[BOOT] engine url: {engine.url.render_as_string(hide_password=True)}", flush=True)
-
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
 
+# ----------------------------------------------------------------------
+# Session
+# ----------------------------------------------------------------------
 
 def get_db():
-    print(f"[REQ] engine url: {engine.url.render_as_string(hide_password=True)}", flush=True)
-    print(f"[REQ] engine id: {id(engine)}", flush=True)
-    print(f"[REQ] SessionLocal id: {id(SessionLocal)}", flush=True)
     db = SessionLocal()
     try:
         yield db

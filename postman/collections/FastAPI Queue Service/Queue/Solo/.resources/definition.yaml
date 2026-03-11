@@ -1,0 +1,4 @@
+$kind: collection
+name: Solo
+description: Solo queue operations - join and leave queue as individual player
+order: 1000

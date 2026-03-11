@@ -1,0 +1,26 @@
+$kind: collection
+name: FastAPI Queue Service
+description: |-
+  API collection for the FastAPI Queue Service - a matchmaking queue system.
+  
+  ## Authentication
+  Most endpoints require an `X-API-Key` header when API_KEY is configured on the server.
+  
+  ## Regions
+  Supported regions: EU, NA, ASIA
+  
+  ## Positions
+  Supported positions: GK, CB, CM, ST
+variables:
+  - key: baseUrl
+    value: 'http://127.0.0.1:8000'
+    description: Base URL for the FastAPI server
+  - key: apiKey
+    value: ''
+    description: API key for authentication (X-API-Key header)
+  - key: userId
+    value: '123456789'
+    description: Sample user ID for testing
+  - key: queueCode
+    value: 'eu_01'
+    description: Sample queue code for testing

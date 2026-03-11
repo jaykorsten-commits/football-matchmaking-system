@@ -1,0 +1,22 @@
+$kind: http-request
+name: Join Manual Queue
+method: POST
+url: '{{baseUrl}}/queue/join/manual'
+order: 1200
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: X-API-Key
+    value: '{{apiKey}}'
+body:
+  type: json
+  content: |-
+    {
+      "user_id": 123456789,
+      "queue_code": "{{queueCode}}",
+      "positions": ["GK", "CB"],
+      "team_format": "5v5",
+      "queue_type": "regular",
+      "ranked_tier": null,
+      "player_level": 32
+    }

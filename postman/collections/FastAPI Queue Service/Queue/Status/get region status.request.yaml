@@ -1,0 +1,20 @@
+$kind: http-request
+name: Get Region Status
+method: POST
+url: '{{baseUrl}}/queue/region/status'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: X-API-Key
+    value: '{{apiKey}}'
+    description: API key for authentication
+body:
+  type: json
+  content: |-
+    {
+      "region": "EU",
+      "queue_type": "regular",
+      "ranked_tier": null,
+      "team_format": "5v5"
+    }

@@ -1,0 +1,8 @@
+$kind: http-request
+name: Cleanup Run
+method: POST
+url: '{{baseUrl}}/queue/cleanup/run'
+order: 3200
+headers:
+  - key: X-API-Key
+    value: '{{apiKey}}'

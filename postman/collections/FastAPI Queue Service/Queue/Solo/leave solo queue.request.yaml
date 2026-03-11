@@ -1,0 +1,17 @@
+$kind: http-request
+name: Leave Solo Queue
+method: POST
+url: '{{baseUrl}}/queue/leave/solo'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: X-API-Key
+    value: '{{apiKey}}'
+    description: API key for authentication
+body:
+  type: json
+  content: |-
+    {
+      "user_id": 123456789
+    }

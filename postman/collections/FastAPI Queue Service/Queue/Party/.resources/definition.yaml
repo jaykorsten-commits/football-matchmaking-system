@@ -1,0 +1,4 @@
+$kind: collection
+name: Party
+description: Party queue operations - join queue as a group of 2-4 players
+order: 2000

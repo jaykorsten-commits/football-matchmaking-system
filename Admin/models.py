@@ -1,16 +1,17 @@
-"""
-Database models for queue matchmaking.
-Change slot structure here and in QueueFunctions.slot_template for different games.
-"""
+# Database models for queue matchmaking.
+# Change the slot structure here and in QueueFunctions slot_template for different games.
 from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, text, ForeignKey, BigInteger
 from sqlalchemy.sql.expression import null
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from .Database import Base
 from sqlalchemy.orm import relationship
 
+# ----------------------------------------------------------------------
+# Queues
+# ----------------------------------------------------------------------
 
 class Queues(Base):
-    """One queue instance. queue_code is human-readable (e.g. eu_01)."""
+    # One queue instance. queue_code is human-readable (e.g., eu_01).
     __tablename__ = 'queues'
     queue_id = Column(Integer, primary_key=True, nullable=False, unique=True)
     queue_code = Column(String, nullable=False, unique=True)
@@ -21,10 +22,17 @@ class Queues(Base):
     created_at = Column(TIMESTAMP(timezone=True), default=text('now()'), nullable=False)
     countdown_ends_at = Column(TIMESTAMP(timezone=True), nullable=True)
     reserved_job_id = Column(String, nullable=True)
+    queue_type = Column(String, nullable=False)
+    ranked_tier = Column(String, nullable=True)
+    team_format = Column(String, nullable=False)
 
+
+# ----------------------------------------------------------------------
+# Queue slots
+# ----------------------------------------------------------------------
 
 class QueueSlot(Base):
-    """Individual seat in a queue. team + position define the role (e.g. A/GK, B/ST)."""
+    # Individual seat in a queue. team + position defines the role (e.g., A/GK, B/ST).
     __tablename__ = 'queue_slot'
     slot_id = Column(Integer, primary_key=True,nullable=False,unique=True)
     queue_id = Column(Integer, ForeignKey('queues.queue_id'), nullable=False)
@@ -34,8 +42,12 @@ class QueueSlot(Base):
     occupant_user_id = Column(BigInteger, nullable=True)
     status = Column(String, nullable=False)
 
+# ----------------------------------------------------------------------
+# Queue players
+# ----------------------------------------------------------------------
+
 class queue_players(Base):
-    """Links a user to a queue and their assigned slot. party_id groups party members."""
+    # Links a user to a queue and their assigned slot. party_id groups party members.
     __tablename__ = 'queue_players'
     id = Column(Integer, primary_key=True,nullable=False,unique=True)
     user_id = Column(BigInteger, nullable=False)
@@ -43,9 +55,14 @@ class queue_players(Base):
     party_id = Column(String, nullable=True)
     assigned_slot_id = Column(Integer, ForeignKey('queue_slot.slot_id'), nullable=False)
     joined_at = Column(TIMESTAMP(timezone=True),default=text('now()'),nullable=False)
+    player_level = Column(Integer, nullable=True)
+
+# ----------------------------------------------------------------------
+# Matches (future)
+# ----------------------------------------------------------------------
 
 class matches(Base):
-    """Future: reserved match/server after queue fills."""
+    # Future: reserved match/server after the queue fills.
     __tablename__ = 'matches'
     match_id = Column(Integer, primary_key=True,nullable=False,unique=True)
     queue_id = Column(Integer, ForeignKey('queues.queue_id'), nullable=False)
@@ -56,8 +73,12 @@ class matches(Base):
     reserved_server_code = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True),default=text('now()'),nullable=False)
 
+# ----------------------------------------------------------------------
+# Region counters
+# ----------------------------------------------------------------------
+
 class region_counters(Base):
-    """Generates unique queue codes per region (eu_01, eu_02, ...)."""
+    # Generates unique queue codes per region (eu_01, eu_02, ...).
     __tablename__ = 'region_counters'
     region = Column(String, primary_key=True,nullable=False,unique=True)
     next_number = Column(Integer, nullable=False)
