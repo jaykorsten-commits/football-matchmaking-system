@@ -13,7 +13,7 @@ Dict-style request/response examples for all routes. Use for Roblox Lua integrat
 Region = ["EU", "NA", "ASIA"]
 Position = ["GK", "CB", "CM", "ST", "RDF", "LDF", "FW", "LM", "RM"]
 QueueType = ["regular", "ranked"]
-RankedTier = ["beginner", "pro", "elite"]  # only when queue_type == "ranked"
+RankedTier = ["pro", "elite"]  # only when queue_type == "ranked"
 TeamFormat = ["5v5", "7v7"]
 ```
 

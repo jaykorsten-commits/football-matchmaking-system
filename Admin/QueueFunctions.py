@@ -626,8 +626,8 @@ def list_queues(payload, db):
     for q in queues:
         level_range = None
         if q.queue_type == schemas.QueueType.RANKED.value and q.ranked_tier:
-            # Level ranges: beginner 1-29, pro 30-60, elite 60-99
-            ranges = {"beginner": (1, 29), "pro": (30, 60), "elite": (60, 99)}
+            # Level ranges: pro 30-60, elite 60-99
+            ranges = {"pro": (30, 60), "elite": (60, 99)}
             mn, mx = ranges.get(q.ranked_tier, (1, 99))
             level_range = {"min": mn, "max": mx}
         queue_items.append({

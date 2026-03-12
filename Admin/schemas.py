@@ -42,8 +42,7 @@ class QueueType(str, Enum):
 
 
 class RankedTier(str, Enum):
-    # Tier when queue_type=ranked. Level ranges: beginner 1-29, pro 30-60, elite 60-99.
-    BEGINNER = "beginner"
+    # Tier when queue_type=ranked. Level ranges: pro 30-60, elite 60-99.
     PRO = "pro"
     ELITE = "elite"
 

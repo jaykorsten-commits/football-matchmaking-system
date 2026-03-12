@@ -34,6 +34,9 @@ wheels/
 *.swp
 *.swo
 
+# Cursor / editor metadata
+.cursor/
+
 # Database
 *.db
 *.sqlite3
